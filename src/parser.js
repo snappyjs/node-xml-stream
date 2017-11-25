@@ -40,8 +40,7 @@ export default class Parser extends Writable {
 		this.state = STATE.TEXT;
 		this.buffer = '';
 		this.pos = 0;
-
-		this.isCloseTag = false;
+		this.tagType = TAG_TYPE.NONE;
 	}
 
 	_write(chunk, encoding, done) {
@@ -59,11 +58,14 @@ export default class Parser extends Writable {
 				break;
 
 			case (STATE.TAG_NAME):
-				if (prev === '<' && c === '?') this._onStartInstruction();
-				if (prev === '<' && c === '/') this._onCloseTagStart();
-				if (this.buffer[this.pos - 3] === '<' && prev === '!' && c === '[') this._onCDATAStart();
-				if (this.buffer[this.pos - 3] === '<' && prev === '!' && c === '-') this._onCommentStart();
-				if (c === '>') this._onTagCompleted();
+				if (prev === '<' && c === '?') { this._onStartInstruction() };
+				if (prev === '<' && c === '/') { this._onCloseTagStart() };
+				if (this.buffer[this.pos - 3] === '<' && prev === '!' && c === '[') { this._onCDATAStart() };
+				if (this.buffer[this.pos - 3] === '<' && prev === '!' && c === '-') { this._onCommentStart() };
+				if (c === '>') {
+					if (prev === "/") { this.tagType |= TAG_TYPE.CLOSING; }
+					this._onTagCompleted();
+				}
 				break;
 
 			case (STATE.INSTRUCTION):
@@ -96,25 +98,28 @@ export default class Parser extends Writable {
 			this.emit(EVENTS.TEXT, text);
 		}
 		this.state = STATE.TAG_NAME;
+		this.tagType = TAG_TYPE.OPENING;
 	}
 
 	_onTagCompleted() {
 		let tag = this._endRecording();
 		let { name, attributes } = this._parseTagString(tag);
 
-		if (!this.isCloseTag) {
+		if (this.tagType & TAG_TYPE.OPENING == TAG_TYPE.OPENING) {
 			this.emit(EVENTS.OPEN_TAG, name, attributes);
-		} else {
+		} 
+		if (this.tagType & TAG_TYPE.CLOSING == TAG_TYPE.CLOSING) {
 			this.emit(EVENTS.CLOSE_TAG, name, attributes);
 		}
 
 		this.isCloseTag = false;
 		this.state = STATE.TEXT;
+		this.tagType = TAG_TYPE.NONE;
 	}
 
 	_onCloseTagStart() {
 		this._endRecording();
-		this.isCloseTag = true;
+		this.tagType = TAG_TYPE.CLOSING;
 	}
 
 	_onStartInstruction() {
@@ -123,7 +128,7 @@ export default class Parser extends Writable {
 	}
 
 	_onEndInstruction() {
-		this.pos -= 2; // Move position back 2 steps since instruction ends with '?>'
+		this.pos -= 1; // Move position back 1 step since instruction ends with '?>'
 		let inst = this._endRecording();
 		let { name, attributes } = this._parseTagString(inst);
 		this.emit(EVENTS.INSTRUCTION, name, attributes);
@@ -158,12 +163,19 @@ export default class Parser extends Writable {
 	 * @return {object}     {name, attributes}
 	 */
 	_parseTagString(str) {
-		let [name, ...attrs] = str.split(/\s+(?=[\w:]+=)/g);
+		let name = /^(\w+?)(\s|$)/.exec(str)[1];
+		let attributesString = str.substr(name.length);
+
+		// parse attributes
+		const attributeRegexp = /(\w+?)="([^"]+?)"/g;
+		let match = attributeRegexp.exec(attributesString);
+
 		let attributes = {};
-		attrs.forEach(attribute => {
-			let [name, value] = attribute.split('=');
-			attributes[name] = value.trim().replace(/"|'/g, '');
-		});
+		while (match != null){
+			attributes[match[1]] = match[2];
+			match = attributeRegexp.exec(attributesString);
+		}
+
 		return { name, attributes };
 	}
 }
@@ -175,6 +187,13 @@ const STATE = {
 	IGNORE_COMMENT: 4,
 	CDATA: 8
 };
+
+const TAG_TYPE = {
+	NONE : 0,
+	OPENING : 1,
+	CLOSING : 2,
+	SELF_CLOSING : 3
+}
 
 export const EVENTS = {
 	TEXT: 'text',

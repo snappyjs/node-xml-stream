@@ -20,6 +20,8 @@ describe('node-xml-stream', function () {
 			var p = new _index2.default();
 
 			p.on('instruction', function (name, attrs) {
+				console.log(name);
+				console.log(attrs);
 				(0, _chai.expect)(name).to.eql('xml');
 				(0, _chai.expect)(attrs).to.be.a('object').with.property('version', '2.0');
 				(0, _chai.expect)(attrs).to.have.property('encoding', 'utf-8');
@@ -61,10 +63,11 @@ describe('node-xml-stream', function () {
 			p.on('closetag', function (name, attrs) {
 				(0, _chai.expect)(name).to.eql('self');
 				(0, _chai.expect)(attrs).to.be.a('object').with.property('name', 'steeljuice');
-				done();
 			});
 
-			p.write('</self name="steeljuice">');
+			p.write('<self name="steeljuice"/>');
+			p.write('<self name="steeljuice" />');
+			done();
 		});
 	});
 

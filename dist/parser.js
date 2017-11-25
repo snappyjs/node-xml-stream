@@ -5,13 +5,9 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.EVENTS = undefined;
 
-var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
-
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 var _stream = require('stream');
-
-function _toArray(arr) { return Array.isArray(arr) ? arr : Array.from(arr); }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -61,8 +57,7 @@ var Parser = function (_Writable) {
 		_this.state = STATE.TEXT;
 		_this.buffer = '';
 		_this.pos = 0;
-
-		_this.isCloseTag = false;
+		_this.tagType = TAG_TYPE.NONE;
 		return _this;
 	}
 
@@ -83,11 +78,24 @@ var Parser = function (_Writable) {
 						break;
 
 					case STATE.TAG_NAME:
-						if (prev === '<' && c === '?') this._onStartInstruction();
-						if (prev === '<' && c === '/') this._onCloseTagStart();
-						if (this.buffer[this.pos - 3] === '<' && prev === '!' && c === '[') this._onCDATAStart();
-						if (this.buffer[this.pos - 3] === '<' && prev === '!' && c === '-') this._onCommentStart();
-						if (c === '>') this._onTagCompleted();
+						if (prev === '<' && c === '?') {
+							this._onStartInstruction();
+						};
+						if (prev === '<' && c === '/') {
+							this._onCloseTagStart();
+						};
+						if (this.buffer[this.pos - 3] === '<' && prev === '!' && c === '[') {
+							this._onCDATAStart();
+						};
+						if (this.buffer[this.pos - 3] === '<' && prev === '!' && c === '-') {
+							this._onCommentStart();
+						};
+						if (c === '>') {
+							if (prev === "/") {
+								this.tagType |= TAG_TYPE.CLOSING;
+							}
+							this._onTagCompleted();
+						}
 						break;
 
 					case STATE.INSTRUCTION:
@@ -121,6 +129,7 @@ var Parser = function (_Writable) {
 				this.emit(EVENTS.TEXT, text);
 			}
 			this.state = STATE.TAG_NAME;
+			this.tagType = TAG_TYPE.OPENING;
 		}
 	}, {
 		key: '_onTagCompleted',
@@ -131,20 +140,22 @@ var Parser = function (_Writable) {
 			    name = _parseTagString2.name,
 			    attributes = _parseTagString2.attributes;
 
-			if (!this.isCloseTag) {
+			if (this.tagType & TAG_TYPE.OPENING == TAG_TYPE.OPENING) {
 				this.emit(EVENTS.OPEN_TAG, name, attributes);
-			} else {
+			}
+			if (this.tagType & TAG_TYPE.CLOSING == TAG_TYPE.CLOSING) {
 				this.emit(EVENTS.CLOSE_TAG, name, attributes);
 			}
 
 			this.isCloseTag = false;
 			this.state = STATE.TEXT;
+			this.tagType = TAG_TYPE.NONE;
 		}
 	}, {
 		key: '_onCloseTagStart',
 		value: function _onCloseTagStart() {
 			this._endRecording();
-			this.isCloseTag = true;
+			this.tagType = TAG_TYPE.CLOSING;
 		}
 	}, {
 		key: '_onStartInstruction',
@@ -155,7 +166,7 @@ var Parser = function (_Writable) {
 	}, {
 		key: '_onEndInstruction',
 		value: function _onEndInstruction() {
-			this.pos -= 2; // Move position back 2 steps since instruction ends with '?>'
+			this.pos -= 1; // Move position back 1 step since instruction ends with '?>'
 			var inst = this._endRecording();
 
 			var _parseTagString3 = this._parseTagString(inst),
@@ -201,20 +212,19 @@ var Parser = function (_Writable) {
 	}, {
 		key: '_parseTagString',
 		value: function _parseTagString(str) {
-			var _str$split = str.split(/\s+(?=[\w:]+=)/g),
-			    _str$split2 = _toArray(_str$split),
-			    name = _str$split2[0],
-			    attrs = _str$split2.slice(1);
+			var name = /^(\w+?)(\s|$)/.exec(str)[1];
+			var attributesString = str.substr(name.length);
+
+			// parse attributes
+			var attributeRegexp = /(\w+?)="([^"]+?)"/g;
+			var match = attributeRegexp.exec(attributesString);
 
 			var attributes = {};
-			attrs.forEach(function (attribute) {
-				var _attribute$split = attribute.split('='),
-				    _attribute$split2 = _slicedToArray(_attribute$split, 2),
-				    name = _attribute$split2[0],
-				    value = _attribute$split2[1];
+			while (match != null) {
+				attributes[match[1]] = match[2];
+				match = attributeRegexp.exec(attributesString);
+			}
 
-				attributes[name] = value.trim().replace(/"|'/g, '');
-			});
 			return { name: name, attributes: attributes };
 		}
 	}]);
@@ -231,6 +241,13 @@ var STATE = {
 	INSTRUCTION: 2,
 	IGNORE_COMMENT: 4,
 	CDATA: 8
+};
+
+var TAG_TYPE = {
+	NONE: 0,
+	OPENING: 1,
+	CLOSING: 2,
+	SELF_CLOSING: 3
 };
 
 var EVENTS = exports.EVENTS = {
