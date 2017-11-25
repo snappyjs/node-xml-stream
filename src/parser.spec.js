@@ -14,8 +14,6 @@ describe('node-xml-stream', function () {
 			let p = new Parser();
 
 			p.on('instruction', function (name, attrs) {
-				console.log(name)
-				console.log(attrs)
 				expect(name).to.eql('xml');
 				expect(attrs).to.be.a('object').with.property('version', '2.0');
 				expect(attrs).to.have.property('encoding', 'utf-8');
