@@ -1,1 +1,6 @@
-src
+src/
+test/
+.babelrc
+.eslintrc
+.gitignore
+README.md

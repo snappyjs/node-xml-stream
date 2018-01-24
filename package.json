@@ -9,7 +9,7 @@
 		"test:src:inspect": "mocha src/**/*.spec.js --compilers js:babel-core/register --watch --inspect-brk",
 		"build": "./node_modules/.bin/babel src --out-dir dist",
 		"lint": "./node_modules/.bin/eslint ./src/**",
-		"prepublish": "cross-env NODE_ENV=production npm run build"
+		"prepare": "cross-env NODE_ENV=production npm run build"
 	},
 	"keywords": [
 		"XML",
