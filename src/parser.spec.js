@@ -38,20 +38,6 @@ describe('node-xml-stream', function () {
 		});
 	});
 
-	describe('Handle SOAP', function () {
-		it('#on(opentag)', function (done) {
-			let p = new Parser();
-
-			p.on('opentag', function (name, attrs) {
-				expect(name).to.eql('SOAP-ENV:Envelope');
-				expect(attrs).to.be.a('object').with.property('xmlns:SOAP-ENV', 'http://schemas.xmlsoap.org/soap/envelope/');
-				done();
-			});
-
-			p.write('<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"><SOAP-ENV:Body><SOAP-ENV:Fault xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"><faultcode>SOAP-ENV:Client.authenticationError</faultcode></SOAP-ENV:Fault></SOAP-ENV:Body></SOAP-ENV:Envelope>');
-		});
-	});
-
 	describe('Emit closetag', function () {
 		it('#on(closetag)', function (done) {
 			let p = new Parser();
@@ -102,6 +88,20 @@ describe('node-xml-stream', function () {
 			p.write('<root><![CDATA[<p>cdata-text</br></p>]]</root>');
 		});
 
+	});
+
+	describe('Handle SOAP', function () {
+		it('#on(opentag)', function (done) {
+			let p = new Parser();
+
+			p.on('opentag', function (name, attrs) {
+				expect(name).to.eql('SOAP-ENV:Envelope');
+				expect(attrs).to.be.a('object').with.property('xmlns:SOAP-ENV', 'http://schemas.xmlsoap.org/soap/envelope/');
+				done();
+			});
+
+			p.write('<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"><SOAP-ENV:Body><SOAP-ENV:Fault xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"><faultcode>SOAP-ENV:Client.authenticationError</faultcode></SOAP-ENV:Fault></SOAP-ENV:Body></SOAP-ENV:Envelope>');
+		});
 	});
 
 	describe('Ignore comments', function () {
