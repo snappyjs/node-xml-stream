@@ -158,7 +158,7 @@ export default class Parser extends Writable {
 	 * @return {object}     {name, attributes}
 	 */
 	_parseTagString(str) {
-		let [name, ...attrs] = str.split(/\s+(?=[\w:]+=)/g);
+		let [name, ...attrs] = str.split(/\s+(?=[\w:-]+=)/g);
 		let attributes = {};
 		attrs.forEach(attribute => {
 			let [name, value] = attribute.split('=');
