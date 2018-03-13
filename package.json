@@ -1,5 +1,5 @@
 {
-	"name": "node-xml-stream",
+	"name": "@excelerate/node-xml-stream",
 	"version": "1.0.2",
 	"description": "A fast XML parser using streams.",
 	"main": "dist/index.js",
