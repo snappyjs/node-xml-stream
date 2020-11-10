@@ -95,6 +95,20 @@ describe('node-xml-stream', function () {
 		});
 	});
 
+	describe('Handle SOAP', function () {
+		it('#on(opentag)', function (done) {
+			var p = new _index2.default();
+
+			p.on('opentag', function (name, attrs) {
+				(0, _chai.expect)(name).to.eql('SOAP-ENV:Envelope');
+				(0, _chai.expect)(attrs).to.be.a('object').with.property('xmlns:SOAP-ENV', 'http://schemas.xmlsoap.org/soap/envelope/');
+				done();
+			});
+
+			p.write('<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"><SOAP-ENV:Body><SOAP-ENV:Fault xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"><faultcode>SOAP-ENV:Client.authenticationError</faultcode></SOAP-ENV:Fault></SOAP-ENV:Body></SOAP-ENV:Envelope>');
+		});
+	});
+
 	describe('Ignore comments', function () {
 
 		it('#on(text) with comments', function (done) {

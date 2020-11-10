@@ -53,17 +53,19 @@ export default class Parser extends Writable {
 
 			switch (this.state) {
 
-<<<<<<< HEAD
 				case (STATE.TEXT):
 					if (c === '<') this._onStartNewTag();
 					break;
 
 				case (STATE.TAG_NAME):
-					if (prev === '<' && c === '?') this._onStartInstruction();
-					if (prev === '<' && c === '/') this._onCloseTagStart();
-					if (this.buffer[this.pos - 3] === '<' && prev === '!' && c === '[') this._onCDATAStart();
-					if (this.buffer[this.pos - 3] === '<' && prev === '!' && c === '-') this._onCommentStart();
-					if (c === '>') this._onTagCompleted();
+					if (prev === '<' && c === '?') { this._onStartInstruction() };
+					if (prev === '<' && c === '/') { this._onCloseTagStart() };
+					if (this.buffer[this.pos - 3] === '<' && prev === '!' && c === '[') { this._onCDATAStart() };
+					if (this.buffer[this.pos - 3] === '<' && prev === '!' && c === '-') { this._onCommentStart() };
+					if (c === '>') {
+						if (prev === "/") { this.tagType |= TAG_TYPE.CLOSING; }
+						this._onTagCompleted();
+					}
 					break;
 
 				case (STATE.INSTRUCTION):
@@ -77,34 +79,6 @@ export default class Parser extends Writable {
 				case (STATE.IGNORE_COMMENT):
 					if (this.buffer[this.pos - 3] === '-' && prev === '-' && c === '>') this._onCommentEnd();
 					break;
-=======
-			case (STATE.TEXT):
-				if (c === '<') this._onStartNewTag();
-				break;
-
-			case (STATE.TAG_NAME):
-				if (prev === '<' && c === '?') { this._onStartInstruction() };
-				if (prev === '<' && c === '/') { this._onCloseTagStart() };
-				if (this.buffer[this.pos - 3] === '<' && prev === '!' && c === '[') { this._onCDATAStart() };
-				if (this.buffer[this.pos - 3] === '<' && prev === '!' && c === '-') { this._onCommentStart() };
-				if (c === '>') {
-					if (prev === "/") { this.tagType |= TAG_TYPE.CLOSING; }
-					this._onTagCompleted();
-				}
-				break;
-
-			case (STATE.INSTRUCTION):
-				if (prev === '?' && c === '>') this._onEndInstruction();
-				break;
-
-			case (STATE.CDATA):
-				if (prev === ']' && c === ']') this._onCDATAEnd();
-				break;
-
-			case (STATE.IGNORE_COMMENT):
-				if (this.buffer[this.pos - 3] === '-' && prev === '-' && c === '>') this._onCommentEnd();
-				break;
->>>>>>> 541aa7e8c4196010e0733b0c2b4354b8239a6106
 			}
 
 		}
@@ -112,9 +86,11 @@ export default class Parser extends Writable {
 	}
 
 	_endRecording() {
-		let rec = this.buffer.slice(1, this.pos - 1);
+		let rec = this.buffer.slice(1, this.pos - 1).trim();
 		this.buffer = this.buffer.slice(-1); // Keep last item in buffer for prev comparison in main loop.
-		this.pos = 1; // Reset the position (since the buffer was reset)
+		this.pos = 1;
+		rec = rec.charAt(rec.length - 1) === '/' ? rec.slice(0, -1) : rec;
+		rec = rec.charAt(rec.length - 1) === '>' ? rec.slice(0, -2) : rec;
 		return rec;
 	}
 
@@ -133,7 +109,7 @@ export default class Parser extends Writable {
 
 		if (this.tagType & TAG_TYPE.OPENING == TAG_TYPE.OPENING) {
 			this.emit(EVENTS.OPEN_TAG, name, attributes);
-		} 
+		}
 		if (this.tagType & TAG_TYPE.CLOSING == TAG_TYPE.CLOSING) {
 			this.emit(EVENTS.CLOSE_TAG, name, attributes);
 		}
@@ -189,23 +165,12 @@ export default class Parser extends Writable {
 	 * @return {object}     {name, attributes}
 	 */
 	_parseTagString(str) {
-<<<<<<< HEAD
 		let [name, ...attrs] = str.split(/\s+(?=[\w:-]+=)/g);
-=======
-		// parse name
-		let name = /^(\w+?)(\s|$)/.exec(str)[1];
-
-		// parse attributes
-		let attributesString = str.substr(name.length);
-		const attributeRegexp = /(\w+?)="([^"]+?)"/g;
-		let match = attributeRegexp.exec(attributesString);
->>>>>>> 541aa7e8c4196010e0733b0c2b4354b8239a6106
 		let attributes = {};
-		while (match != null){
-			attributes[match[1]] = match[2];
-			match = attributeRegexp.exec(attributesString);
-		}
-
+		attrs.forEach((attribute) => {
+			let [name, value] = attribute.split("=");
+			attributes[name] = value.trim().replace(/"|'/g, "");
+		});
 		return { name, attributes };
 	}
 }
@@ -219,10 +184,10 @@ const STATE = {
 };
 
 const TAG_TYPE = {
-	NONE : 0,
-	OPENING : 1,
-	CLOSING : 2,
-	SELF_CLOSING : 3
+	NONE: 0,
+	OPENING: 1,
+	CLOSING: 2,
+	SELF_CLOSING: 3
 }
 
 export const EVENTS = {

@@ -5,9 +5,13 @@ Object.defineProperty(exports, "__esModule", {
 });
 exports.EVENTS = undefined;
 
+var _slicedToArray = function () { function sliceIterator(arr, i) { var _arr = []; var _n = true; var _d = false; var _e = undefined; try { for (var _i = arr[Symbol.iterator](), _s; !(_n = (_s = _i.next()).done); _n = true) { _arr.push(_s.value); if (i && _arr.length === i) break; } } catch (err) { _d = true; _e = err; } finally { try { if (!_n && _i["return"]) _i["return"](); } finally { if (_d) throw _e; } } return _arr; } return function (arr, i) { if (Array.isArray(arr)) { return arr; } else if (Symbol.iterator in Object(arr)) { return sliceIterator(arr, i); } else { throw new TypeError("Invalid attempt to destructure non-iterable instance"); } }; }();
+
 var _createClass = function () { function defineProperties(target, props) { for (var i = 0; i < props.length; i++) { var descriptor = props[i]; descriptor.enumerable = descriptor.enumerable || false; descriptor.configurable = true; if ("value" in descriptor) descriptor.writable = true; Object.defineProperty(target, descriptor.key, descriptor); } } return function (Constructor, protoProps, staticProps) { if (protoProps) defineProperties(Constructor.prototype, protoProps); if (staticProps) defineProperties(Constructor, staticProps); return Constructor; }; }();
 
 var _stream = require('stream');
+
+function _toArray(arr) { return Array.isArray(arr) ? arr : Array.from(arr); }
 
 function _classCallCheck(instance, Constructor) { if (!(instance instanceof Constructor)) { throw new TypeError("Cannot call a class as a function"); } }
 
@@ -116,9 +120,11 @@ var Parser = function (_Writable) {
 	}, {
 		key: '_endRecording',
 		value: function _endRecording() {
-			var rec = this.buffer.slice(1, this.pos - 1);
+			var rec = this.buffer.slice(1, this.pos - 1).trim();
 			this.buffer = this.buffer.slice(-1); // Keep last item in buffer for prev comparison in main loop.
-			this.pos = 1; // Reset the position (since the buffer was reset)
+			this.pos = 1;
+			rec = rec.charAt(rec.length - 1) === '/' ? rec.slice(0, -1) : rec;
+			rec = rec.charAt(rec.length - 1) === '>' ? rec.slice(0, -2) : rec;
 			return rec;
 		}
 	}, {
@@ -212,19 +218,20 @@ var Parser = function (_Writable) {
 	}, {
 		key: '_parseTagString',
 		value: function _parseTagString(str) {
-			// parse name
-			var name = /^(\w+?)(\s|$)/.exec(str)[1];
+			var _str$split = str.split(/\s+(?=[\w:-]+=)/g),
+			    _str$split2 = _toArray(_str$split),
+			    name = _str$split2[0],
+			    attrs = _str$split2.slice(1);
 
-			// parse attributes
-			var attributesString = str.substr(name.length);
-			var attributeRegexp = /(\w+?)="([^"]+?)"/g;
-			var match = attributeRegexp.exec(attributesString);
 			var attributes = {};
-			while (match != null) {
-				attributes[match[1]] = match[2];
-				match = attributeRegexp.exec(attributesString);
-			}
+			attrs.forEach(function (attribute) {
+				var _attribute$split = attribute.split("="),
+				    _attribute$split2 = _slicedToArray(_attribute$split, 2),
+				    name = _attribute$split2[0],
+				    value = _attribute$split2[1];
 
+				attributes[name] = value.trim().replace(/"|'/g, "");
+			});
 			return { name: name, attributes: attributes };
 		}
 	}]);
