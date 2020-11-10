@@ -1,36 +1,42 @@
 'use strict';
 
-import { expect } from 'chai';
-import Parser from './index';
+var _chai = require('chai');
 
-import fs from 'fs';
+var _index = require('./index');
+
+var _index2 = _interopRequireDefault(_index);
+
+var _fs = require('fs');
+
+var _fs2 = _interopRequireDefault(_fs);
+
+function _interopRequireDefault(obj) { return obj && obj.__esModule ? obj : { default: obj }; }
 
 describe('node-xml-stream', function () {
 
 	describe('Emit instruction', function () {
 
 		it('#on(instruction)', function (done) {
-			let p = new Parser();
+			var p = new _index2.default();
 
 			p.on('instruction', function (name, attrs) {
-				expect(name).to.eql('xml');
-				expect(attrs).to.be.a('object').with.property('version', '2.0');
-				expect(attrs).to.have.property('encoding', 'utf-8');
+				(0, _chai.expect)(name).to.eql('xml');
+				(0, _chai.expect)(attrs).to.be.a('object').with.property('version', '2.0');
+				(0, _chai.expect)(attrs).to.have.property('encoding', 'utf-8');
 				done();
 			});
 
 			p.write('<root><?xml version="2.0" encoding="utf-8"?></root>');
 		});
-
 	});
 
 	describe('Emit opentag', function () {
 		it('#on(opentag)', function (done) {
-			let p = new Parser();
+			var p = new _index2.default();
 
 			p.on('opentag', function (name, attrs) {
-				expect(name).to.eql('root');
-				expect(attrs).to.be.a('object').with.property('name', 'steeljuice');
+				(0, _chai.expect)(name).to.eql('root');
+				(0, _chai.expect)(attrs).to.be.a('object').with.property('name', 'steeljuice');
 				done();
 			});
 
@@ -40,22 +46,21 @@ describe('node-xml-stream', function () {
 
 	describe('Emit closetag', function () {
 		it('#on(closetag)', function (done) {
-			let p = new Parser();
+			var p = new _index2.default();
 
 			p.on('closetag', function (name) {
-				expect(name).to.eql('root');
+				(0, _chai.expect)(name).to.eql('root');
 				done();
 			});
 
 			p.write('<root name="steeljuice">TEXT</root>');
-
 		});
 
 		it('#on(closetag) self closing.', function (done) {
-			let p = new Parser();
+			var p = new _index2.default();
 			p.on('closetag', function (name, attrs) {
-				expect(name).to.eql('self');
-				expect(attrs).to.be.a('object').with.property('name', 'steeljuice');
+				(0, _chai.expect)(name).to.eql('self');
+				(0, _chai.expect)(attrs).to.be.a('object').with.property('name', 'steeljuice');
 			});
 
 			p.write('<self name="steeljuice"/>');
@@ -67,9 +72,9 @@ describe('node-xml-stream', function () {
 	describe('Emit text', function () {
 
 		it('#on(text)', function (done) {
-			let p = new Parser();
+			var p = new _index2.default();
 			p.on('text', function (text) {
-				expect(text).to.eql('SteelJuice');
+				(0, _chai.expect)(text).to.eql('SteelJuice');
 				done();
 			});
 			p.write('<root>SteelJuice</root>');
@@ -79,68 +84,49 @@ describe('node-xml-stream', function () {
 	describe('Emit CDATA', function () {
 
 		it('#on(cdata)', function (done) {
-			let p = new Parser();
+			var p = new _index2.default();
 
 			p.on('cdata', function (cdata) {
-				expect(cdata).to.eql('<p>cdata-text</br></p>');
+				(0, _chai.expect)(cdata).to.eql('<p>cdata-text</br></p>');
 				done();
 			});
 
 			p.write('<root><![CDATA[<p>cdata-text</br></p>]]</root>');
-		});
-
-	});
-
-	describe('Handle SOAP', function () {
-		it('#on(opentag)', function (done) {
-			let p = new Parser();
-
-			p.on('opentag', function (name, attrs) {
-				expect(name).to.eql('SOAP-ENV:Envelope');
-				expect(attrs).to.be.a('object').with.property('xmlns:SOAP-ENV', 'http://schemas.xmlsoap.org/soap/envelope/');
-				done();
-			});
-
-			p.write('<SOAP-ENV:Envelope xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"><SOAP-ENV:Body><SOAP-ENV:Fault xmlns:SOAP-ENV="http://schemas.xmlsoap.org/soap/envelope/"><faultcode>SOAP-ENV:Client.authenticationError</faultcode></SOAP-ENV:Fault></SOAP-ENV:Body></SOAP-ENV:Envelope>');
 		});
 	});
 
 	describe('Ignore comments', function () {
 
 		it('#on(text) with comments', function (done) {
-			let p = new Parser();
+			var p = new _index2.default();
 			p.on('text', function (text) {
-				expect(text).to.eql('TEXT');
+				(0, _chai.expect)(text).to.eql('TEXT');
 				done();
 			});
 
 			p.write('<root><!--Comment is written here! -->TEXT<!-- another comment! --></root>');
 		});
-
 	});
 
 	describe('Stream', function () {
 		it('#pipe() a stream.', function (done) {
-			let p = new Parser();
-			let stream = fs.createReadStream('./test/intertwingly.atom');
+			var p = new _index2.default();
+			var stream = _fs2.default.createReadStream('./test/intertwingly.atom');
 			stream.pipe(p);
 
 			// Count the number of entry tags found (start/closing) and compare them (they should be the same) when the stream is completed.
-			let entryclose = 0;
-			let entrystart = 0;
-			p.on('closetag', name => {
-				if (name === 'entry')
-					entryclose++;
+			var entryclose = 0;
+			var entrystart = 0;
+			p.on('closetag', function (name) {
+				if (name === 'entry') entryclose++;
 			});
-			p.on('opentag', name => {
-				if (name === 'entry')
-					entrystart++;
+			p.on('opentag', function (name) {
+				if (name === 'entry') entrystart++;
 			});
-			p.on('finish', () => {
-				expect(entryclose).to.eql(entrystart);
+			p.on('finish', function () {
+				(0, _chai.expect)(entryclose).to.eql(entrystart);
 				done();
 			});
 		});
 	});
-
 });
