@@ -25,10 +25,10 @@
 		"url": "https://github.com/Steeljuice/node-xml-stream"
 	},
 	"devDependencies": {
-		"babel-cli": "^6.24.1",
+		"babel-cli": "^6.26.0",
 		"babel-preset-es2015": "^6.24.1",
-		"chai": "^4.1.0",
-		"eslint": "^4.3.0",
-		"mocha": "^3.5.0"
+		"chai": "^4.2.0",
+		"eslint": "^7.13.0",
+		"mocha": "^8.2.1"
 	}
 }
