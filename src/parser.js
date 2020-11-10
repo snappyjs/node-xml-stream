@@ -54,29 +54,29 @@ export default class Parser extends Writable {
 
 			switch (this.state) {
 
-			case (STATE.TEXT):
-				if (c === '<') this._onStartNewTag();
-				break;
+				case (STATE.TEXT):
+					if (c === '<') this._onStartNewTag();
+					break;
 
-			case (STATE.TAG_NAME):
-				if (prev === '<' && c === '?') this._onStartInstruction();
-				if (prev === '<' && c === '/') this._onCloseTagStart();
-				if (this.buffer[this.pos - 3] === '<' && prev === '!' && c === '[') this._onCDATAStart();
-				if (this.buffer[this.pos - 3] === '<' && prev === '!' && c === '-') this._onCommentStart();
-				if (c === '>') this._onTagCompleted();
-				break;
+				case (STATE.TAG_NAME):
+					if (prev === '<' && c === '?') this._onStartInstruction();
+					if (prev === '<' && c === '/') this._onCloseTagStart();
+					if (this.buffer[this.pos - 3] === '<' && prev === '!' && c === '[') this._onCDATAStart();
+					if (this.buffer[this.pos - 3] === '<' && prev === '!' && c === '-') this._onCommentStart();
+					if (c === '>') this._onTagCompleted();
+					break;
 
-			case (STATE.INSTRUCTION):
-				if (prev === '?' && c === '>') this._onEndInstruction();
-				break;
+				case (STATE.INSTRUCTION):
+					if (prev === '?' && c === '>') this._onEndInstruction();
+					break;
 
-			case (STATE.CDATA):
-				if (prev === ']' && c === ']') this._onCDATAEnd();
-				break;
+				case (STATE.CDATA):
+					if (prev === ']' && c === ']') this._onCDATAEnd();
+					break;
 
-			case (STATE.IGNORE_COMMENT):
-				if (this.buffer[this.pos - 3] === '-' && prev === '-' && c === '>') this._onCommentEnd();
-				break;
+				case (STATE.IGNORE_COMMENT):
+					if (this.buffer[this.pos - 3] === '-' && prev === '-' && c === '>') this._onCommentEnd();
+					break;
 			}
 
 		}
