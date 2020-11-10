@@ -1,5 +1,5 @@
 {
-	"name": "node-xml-stream",
+	"name": "@excelerate/node-xml-stream",
 	"version": "1.0.2",
 	"description": "A fast XML parser using streams.",
 	"main": "dist/index.js",
@@ -7,8 +7,10 @@
 		"test": "mocha dist/**/*.spec.js",
 		"test:src": "mocha src/**/*.spec.js --compilers js:babel-core/register --watch",
 		"test:src:inspect": "mocha src/**/*.spec.js --compilers js:babel-core/register --watch --inspect-brk",
-		"build": "./node_modules/.bin/babel src --out-dir dist",
-		"lint": "./node_modules/.bin/eslint ./src/**"
+		"build": "babel src --out-dir dist",
+		"build:watch": "npm run build -- -w",
+		"lint": "eslint ./src/**",
+		"prepublishOnly": "cross-env NODE_ENV=production npm run build"
 	},
 	"keywords": [
 		"XML",
