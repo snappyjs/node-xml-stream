@@ -50,8 +50,16 @@ export default class Parser extends Writable {
 			if(chunk[0] == 0xff && chunk[1] == 0xfe) this.detectedEncoding = 'utf16le';
 			if(chunk[0] == 0xfe && chunk[1] == 0xff) this.detectedEncoding = 'utf16be';
 		}
+		let useEncoding = this.detectedEncoding;
 		
-		chunk = typeof chunk !== 'string' ? chunk.toString(this.detectedEncoding) : chunk;
+		//Node does not have built in support for big endian. But we can use swap16 to swap byte pairs to a utf16le
+		if(typeof chunk !== 'string' && this.detectedEncoding === 'utf16be'){
+			chunk.swap16();
+			useEncoding = 'utf16le';
+		}
+		
+		
+		chunk = typeof chunk !== 'string' ? chunk.toString(useEncoding) : chunk;
 		for (let i = 0; i < chunk.length; i++) {
 			let c = chunk[i];
 			let prev = this.buffer[this.pos - 1];
