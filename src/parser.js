@@ -40,11 +40,26 @@ export default class Parser extends Writable {
 		this.state = STATE.TEXT;
 		this.buffer = '';
 		this.pos = 0;
+		this.detectedEncoding = 'utf8';
 		this.tagType = TAG_TYPE.NONE;
 	}
 
 	_write(chunk, encoding, done) {
-		chunk = typeof chunk !== 'string' ? chunk.toString() : chunk;
+		
+		if(typeof chunk !== 'string' && this.pos == 0){
+			if(chunk[0] == 0xff && chunk[1] == 0xfe) this.detectedEncoding = 'utf16le';
+			if(chunk[0] == 0xfe && chunk[1] == 0xff) this.detectedEncoding = 'utf16be';
+		}
+		let useEncoding = this.detectedEncoding;
+		
+		//Node does not have built in support for big endian. But we can use swap16 to swap byte pairs to a utf16le
+		if(typeof chunk !== 'string' && this.detectedEncoding === 'utf16be'){
+			chunk.swap16();
+			useEncoding = 'utf16le';
+		}
+		
+		
+		chunk = typeof chunk !== 'string' ? chunk.toString(useEncoding) : chunk;
 		for (let i = 0; i < chunk.length; i++) {
 			let c = chunk[i];
 			let prev = this.buffer[this.pos - 1];
@@ -108,10 +123,10 @@ export default class Parser extends Writable {
 		let { name, attributes } = this._parseTagString(tag);
 
 		if (this.tagType & TAG_TYPE.OPENING == TAG_TYPE.OPENING) {
-			this.emit(EVENTS.OPEN_TAG, name, attributes);
+			this.emit(EVENTS.OPEN_TAG, name.trim(), attributes);
 		}
 		if (this.tagType & TAG_TYPE.CLOSING == TAG_TYPE.CLOSING) {
-			this.emit(EVENTS.CLOSE_TAG, name, attributes);
+			this.emit(EVENTS.CLOSE_TAG, name.trim(), attributes);
 		}
 
 		this.isCloseTag = false;
