@@ -107,10 +107,10 @@ export default class Parser extends Writable {
 		let tag = this._endRecording();
 		let { name, attributes } = this._parseTagString(tag);
 
-		if (this.tagType & TAG_TYPE.OPENING == TAG_TYPE.OPENING) {
+		if ((this.tagType & TAG_TYPE.OPENING) == TAG_TYPE.OPENING) {
 			this.emit(EVENTS.OPEN_TAG, name, attributes);
 		}
-		if (this.tagType & TAG_TYPE.CLOSING == TAG_TYPE.CLOSING) {
+		if ((this.tagType & TAG_TYPE.CLOSING) == TAG_TYPE.CLOSING) {
 			this.emit(EVENTS.CLOSE_TAG, name, attributes);
 		}
 
